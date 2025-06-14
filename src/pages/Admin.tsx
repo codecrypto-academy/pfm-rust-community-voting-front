@@ -1,19 +1,12 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { communityService } from '@/lib/communityService';
 import { Member } from '@/services/types';
 import { useToast } from '@/hooks/use-toast';
+import { useWalletExt } from '@/hooks/useAnchorWalletAdapter';
 
 const Admin = () => {
-  const { connected, publicKey, signTransaction, signAllTransactions } = useWallet();
-
-  const walletForAnchor = {
-      publicKey,
-      signTransaction,
-      signAllTransactions,
-  };
-
+  const { connected, publicKey, anchorWallet } = useWalletExt();
   const { toast } = useToast();
   
   const [communityName, setCommunityName] = useState('');
@@ -79,7 +72,7 @@ const Admin = () => {
       await communityService.initializeCommunity(
         communityName,
         communityDescription,
-        walletForAnchor
+        anchorWallet
       );
       
       toast({
@@ -115,7 +108,7 @@ const Admin = () => {
       await communityService.approveMembership(
         communityName,
         memberAddress,
-        walletForAnchor
+        anchorWallet
       );
       
       toast({
