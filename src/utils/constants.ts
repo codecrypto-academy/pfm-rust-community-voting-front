@@ -1,15 +1,10 @@
 
 import { PublicKey } from '@solana/web3.js';
+import { appConfig } from '../config/app';
 
-export const SOLANA_CLUSTER = process.env.NODE_ENV === 'development' 
-  ? 'http://localhost:8899' 
-  : 'https://api.devnet.solana.com';
+export const SOLANA_CLUSTER = appConfig.solana.cluster;
 
-export const PROGRAM_ID = new PublicKey(
-  process.env.NODE_ENV === 'development' 
-    ? 'CgEPCH2sZKj5Zi7Ms2pJsvi4KKVde76GYbSRnfePGHtn'
-    : 'CgEPCH2sZKj5Zi7Ms2pJsvi4KKVde76GYbSRnfePGHtn'
-);
+export const PROGRAM_ID = new PublicKey(appConfig.solana.programId);
 
 export const COMMUNITY_SEED = 'community';
 export const MEMBERSHIP_SEED = 'membership';
