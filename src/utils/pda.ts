@@ -1,31 +1,53 @@
-
 import { PublicKey } from '@solana/web3.js';
-import { PROGRAM_ID, COMMUNITY_SEED, MEMBERSHIP_SEED, POLL_SEED, VOTE_SEED } from './constants';
+import * as anchor from "@coral-xyz/anchor";
 
-export const getCommunityPDA = (communityId: string) => {
-  return PublicKey.findProgramAddressSync(
-    [Buffer.from(COMMUNITY_SEED), Buffer.from(communityId)],
+const PROGRAM_ID = new PublicKey(import.meta.env.VITE_PROGRAM_ID);
+
+export const getCommunityPDA = (name: string): [PublicKey, number] => {
+  return anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from('community'), Buffer.from(name)],
     PROGRAM_ID
   );
 };
 
-export const getMembershipPDA = (community: PublicKey, member: PublicKey) => {
+export const getMembershipPDA = (
+  communityPda: PublicKey,
+  memberPubkey: PublicKey
+): [PublicKey, number] => {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from(MEMBERSHIP_SEED), community.toBuffer(), member.toBuffer()],
+    [
+      Buffer.from('membership'),
+      communityPda.toBuffer(),
+      memberPubkey.toBuffer(),
+    ],
     PROGRAM_ID
   );
 };
 
-export const getPollPDA = (community: PublicKey, pollId: string) => {
+export const getPollPDA = (
+  communityPda: PublicKey,
+  pollIndex: anchor.BN
+): [PublicKey, number] => {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from(POLL_SEED), community.toBuffer(), Buffer.from(pollId)],
+    [
+      Buffer.from('poll'),
+      communityPda.toBuffer(),
+      pollIndex.toArrayLike(Buffer, 'le', 8),
+    ],
     PROGRAM_ID
   );
 };
 
-export const getVotePDA = (poll: PublicKey, voter: PublicKey) => {
+export const getVotePDA = (
+  pollPda: PublicKey,
+  voterPubkey: PublicKey
+): [PublicKey, number] => {
   return PublicKey.findProgramAddressSync(
-    [Buffer.from(VOTE_SEED), poll.toBuffer(), voter.toBuffer()],
+    [
+      Buffer.from('vote'),
+      pollPda.toBuffer(),
+      voterPubkey.toBuffer(),
+    ],
     PROGRAM_ID
   );
 };

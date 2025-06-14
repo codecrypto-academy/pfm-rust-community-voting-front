@@ -1,5 +1,5 @@
-
-import React from 'react';
+import { useEffect } from 'react';
+import { useCommunity } from '@/hooks/useCommunity';
 import { motion } from 'framer-motion';
 import { useWallet } from '@solana/wallet-adapter-react';
 import Navbar from '../components/Navbar';
@@ -9,31 +9,40 @@ import PollCard from '../components/PollCard';
 
 const Index = () => {
   const { connected } = useWallet();
+  const { community, polls, membershipStatus, isLoading, error, actions } = useCommunity('pfm-prueba');
+  useEffect(() => {
+      if (community) {
+          console.log('✅ Live community data from Solana:', community);
+      }
+      if (error) {
+          console.error('❌ Error loading community:', error);
+      }
+  }, [community, error]);
 
   // Mock data for demonstration
-  const mockPolls = [
-    {
-      id: '1',
-      question: 'Should we implement a new rewards system for active community members?',
-      options: ['Yes, with token rewards', 'Yes, with NFT rewards', 'No, keep current system', 'Need more discussion'],
-      endTime: new Date(Date.now() + 86400000), // 24 hours from now
-      isActive: true
-    },
-    {
-      id: '2',
-      question: 'What should be our next community event?',
-      options: ['Virtual meetup', 'AMA session', 'Workshop', 'Gaming tournament'],
-      endTime: new Date(Date.now() + 172800000), // 48 hours from now
-      isActive: true
-    },
-    {
-      id: '3',
-      question: 'Community governance voting mechanism',
-      options: ['Quadratic voting', 'One person one vote', 'Token-weighted voting'],
-      endTime: new Date(Date.now() - 86400000), // 24 hours ago
-      isActive: false
-    }
-  ];
+  // const mockPolls = [
+  //   {
+  //     id: '1',
+  //     question: 'Should we implement a new rewards system for active community members?',
+  //     options: ['Yes, with token rewards', 'Yes, with NFT rewards', 'No, keep current system', 'Need more discussion'],
+  //     endTime: new Date(Date.now() + 86400000), // 24 hours from now
+  //     isActive: true
+  //   },
+  //   {
+  //     id: '2',
+  //     question: 'What should be our next community event?',
+  //     options: ['Virtual meetup', 'AMA session', 'Workshop', 'Gaming tournament'],
+  //     endTime: new Date(Date.now() + 172800000), // 48 hours from now
+  //     isActive: true
+  //   },
+  //   {
+  //     id: '3',
+  //     question: 'Community governance voting mechanism',
+  //     options: ['Quadratic voting', 'One person one vote', 'Token-weighted voting'],
+  //     endTime: new Date(Date.now() - 86400000), // 24 hours ago
+  //     isActive: false
+  //   }
+  // ];
 
   const handleJoinCommunity = () => {
     // Navigate to community page
@@ -172,7 +181,7 @@ const Index = () => {
               </Button>
             </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {mockPolls.map((poll, index) => (
                 <motion.div
                   key={poll.id}
@@ -187,7 +196,7 @@ const Index = () => {
                   />
                 </motion.div>
               ))}
-            </div>
+            </div> */}
           </motion.section>
         )}
       </main>

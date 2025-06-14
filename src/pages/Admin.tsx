@@ -1,20 +1,58 @@
-
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useWallet } from '@solana/wallet-adapter-react';
-import Navbar from '../components/Navbar';
-import Card from '../components/Card';
-import Button from '../components/Button';
-import FormField from '../components/FormField';
+import { communityService } from '@/lib/communityService';
+import { Member } from '@/services/types';
 import { useToast } from '@/hooks/use-toast';
 
 const Admin = () => {
-  const { connected, publicKey } = useWallet();
+  const { connected, publicKey, signTransaction, signAllTransactions } = useWallet();
+
+  const walletForAnchor = {
+      publicKey,
+      signTransaction,
+      signAllTransactions,
+  };
+
   const { toast } = useToast();
   
   const [communityName, setCommunityName] = useState('');
   const [communityDescription, setCommunityDescription] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [pendingMembers, setPendingMembers] = useState<Member[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+  const [stats, _setStats] = useState({
+    activeCommunities: 0,
+    totalMembers: 0,
+    activePolls: 0,
+    totalVotes: 0,
+  });
+
+  // Fetch pending members when component mounts
+  useEffect(() => {
+    if (connected && communityName) {
+      fetchPendingMembers();
+    }
+  }, [connected, communityName]);
+
+  const fetchPendingMembers = async () => {
+    if (!communityName.trim()) return;
+    
+    setIsLoadingMembers(true);
+    try {
+      const members = await communityService.fetchPendingMembers(communityName);
+      setPendingMembers(members);
+    } catch (error) {
+      console.error('Error fetching pending members:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch pending members",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingMembers(false);
+    }
+  };
 
   const handleInitializeCommunity = async () => {
     if (!connected || !publicKey) {
@@ -38,8 +76,11 @@ const Admin = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call - in real implementation, this would call the Anchor program
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await communityService.initializeCommunity(
+        communityName,
+        communityDescription,
+        walletForAnchor
+      );
       
       toast({
         title: "Community initialized!",
@@ -49,6 +90,7 @@ const Admin = () => {
       setCommunityName('');
       setCommunityDescription('');
     } catch (error) {
+      console.error('Error initializing community:', error);
       toast({
         title: "Error",
         description: "Failed to initialize community. Please try again.",
@@ -59,25 +101,62 @@ const Admin = () => {
     }
   };
 
-  const mockPendingMembers = [
-    { address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU', joinedAt: new Date() },
-    { address: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM', joinedAt: new Date() },
-  ];
+  const handleApproveMember = async (memberAddress: string) => {
+    if (!communityName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please specify a community name first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await communityService.approveMembership(
+        communityName,
+        memberAddress,
+        walletForAnchor
+      );
+      
+      toast({
+        title: "Member approved!",
+        description: `Member ${memberAddress.slice(0, 8)}... has been approved`,
+      });
+      
+      // Refresh pending members list
+      fetchPendingMembers();
+    } catch (error) {
+      console.error('Error approving member:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve member",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRejectMember = async (memberAddress: string) => {
+    // For now, just remove from the list (in a real implementation, you might want to add a reject function)
+    setPendingMembers(prev => prev.filter(member => member.address !== memberAddress));
+    toast({
+      title: "Member rejected",
+      description: `Member ${memberAddress.slice(0, 8)}... has been rejected`,
+    });
+  };
 
   if (!connected) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Navbar />
         <div className="flex items-center justify-center min-h-[80vh]">
-          <Card className="text-center max-w-md">
-            <h2 className="text-2xl font-bold text-charcoal mb-4">
+          <div className="text-center max-w-md bg-white p-8 rounded-2xl shadow-lg">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
               Admin Access Required
             </h2>
             <p className="text-gray-600 mb-6">
               Please connect your wallet to access the admin dashboard
             </p>
-            <div className="w-12 h-12 bg-accent-purple/10 rounded-full mx-auto animate-pulse"></div>
-          </Card>
+            <div className="w-12 h-12 bg-purple-100 rounded-full mx-auto animate-pulse"></div>
+          </div>
         </div>
       </div>
     );
@@ -85,15 +164,13 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
       <main className="max-w-7xl mx-auto px-6 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-4xl font-bold text-charcoal mb-4">
+          <h1 className="text-4xl font-bold text-gray-800 mb-4">
             Admin Dashboard
           </h1>
           <p className="text-gray-600">
@@ -108,43 +185,49 @@ const Admin = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <Card>
-              <h2 className="text-2xl font-semibold text-charcoal mb-6">
+            <div className="bg-white p-8 rounded-2xl shadow-lg">
+              <h2 className="text-2xl font-semibold text-gray-800 mb-6">
                 Initialize New Community
               </h2>
               
               <div className="space-y-6">
-                <FormField
-                  label="Community Name"
-                  value={communityName}
-                  onChange={setCommunityName}
-                  placeholder="Enter community name"
-                  required
-                />
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">
+                    Community Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={communityName}
+                    onChange={(e) => setCommunityName(e.target.value)}
+                    placeholder="Enter community name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                    required
+                  />
+                </div>
                 
-                <div className="form-floating">
+                <div>
+                  <label className="block text-gray-700 text-sm font-medium mb-2">
+                    Community Description *
+                  </label>
                   <textarea
                     value={communityDescription}
                     onChange={(e) => setCommunityDescription(e.target.value)}
-                    placeholder="Community Description"
+                    placeholder="Enter community description"
                     required
                     rows={4}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-purple focus:border-transparent transition-all resize-none"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-none"
                   />
-                  <label className="text-gray-600">
-                    Community Description *
-                  </label>
                 </div>
                 
-                <Button
+                <button
                   onClick={handleInitializeCommunity}
                   disabled={isLoading}
-                  className="w-full"
+                  className="w-full bg-purple-600 text-white py-3 px-6 rounded-xl hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   {isLoading ? 'Initializing...' : 'Initialize Community'}
-                </Button>
+                </button>
               </div>
-            </Card>
+            </div>
           </motion.div>
 
           {/* Pending Members */}
@@ -153,12 +236,30 @@ const Admin = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
-            <Card>
-              <h2 className="text-2xl font-semibold text-charcoal mb-6">
-                Pending Members
-              </h2>
+            <div className="bg-white p-8 rounded-2xl shadow-lg">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-semibold text-gray-800">
+                  Pending Members
+                </h2>
+                {communityName && (
+                  <button
+                    onClick={fetchPendingMembers}
+                    disabled={isLoadingMembers}
+                    className="text-purple-600 hover:text-purple-700 text-sm font-medium"
+                  >
+                    {isLoadingMembers ? 'Loading...' : 'Refresh'}
+                  </button>
+                )}
+              </div>
               
-              {mockPendingMembers.length === 0 ? (
+              {!communityName ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
+                  </div>
+                  <p className="text-gray-600">Please specify a community name to view pending members</p>
+                </div>
+              ) : pendingMembers.length === 0 ? (
                 <div className="text-center py-8">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <div className="w-8 h-8 bg-gray-300 rounded-full"></div>
@@ -167,7 +268,7 @@ const Admin = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {mockPendingMembers.map((member, index) => (
+                  {pendingMembers.map((member, index) => (
                     <motion.div
                       key={member.address}
                       initial={{ opacity: 0, y: 10 }}
@@ -176,7 +277,7 @@ const Admin = () => {
                       className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
                     >
                       <div>
-                        <p className="font-mono text-sm text-charcoal">
+                        <p className="font-mono text-sm text-gray-800">
                           {member.address.slice(0, 8)}...{member.address.slice(-8)}
                         </p>
                         <p className="text-xs text-gray-500">
@@ -184,25 +285,24 @@ const Admin = () => {
                         </p>
                       </div>
                       <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => toast({ title: "Member rejected" })}
+                        <button
+                          onClick={() => handleRejectMember(member.address)}
+                          className="px-4 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                         >
                           Reject
-                        </Button>
-                        <Button
-                          size="sm"
-                          onClick={() => toast({ title: "Member approved!" })}
+                        </button>
+                        <button
+                          onClick={() => handleApproveMember(member.address)}
+                          className="px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
                         >
                           Approve
-                        </Button>
+                        </button>
                       </div>
                     </motion.div>
                   ))}
                 </div>
               )}
-            </Card>
+            </div>
           </motion.div>
         </div>
 
@@ -214,22 +314,22 @@ const Admin = () => {
           className="mt-8"
         >
           <div className="grid md:grid-cols-4 gap-6">
-            <Card className="text-center">
-              <h3 className="text-3xl font-bold text-accent-purple mb-2">3</h3>
+            <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+              <h3 className="text-3xl font-bold text-purple-600 mb-2">{stats.activeCommunities}</h3>
               <p className="text-gray-600">Active Communities</p>
-            </Card>
-            <Card className="text-center">
-              <h3 className="text-3xl font-bold text-accent-purple mb-2">247</h3>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+              <h3 className="text-3xl font-bold text-purple-600 mb-2">{stats.totalMembers}</h3>
               <p className="text-gray-600">Total Members</p>
-            </Card>
-            <Card className="text-center">
-              <h3 className="text-3xl font-bold text-accent-purple mb-2">12</h3>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+              <h3 className="text-3xl font-bold text-purple-600 mb-2">{stats.activePolls}</h3>
               <p className="text-gray-600">Active Polls</p>
-            </Card>
-            <Card className="text-center">
-              <h3 className="text-3xl font-bold text-accent-purple mb-2">1,543</h3>
+            </div>
+            <div className="bg-white p-6 rounded-2xl shadow-lg text-center">
+              <h3 className="text-3xl font-bold text-purple-600 mb-2">{stats.totalVotes}</h3>
               <p className="text-gray-600">Total Votes Cast</p>
-            </Card>
+            </div>
           </div>
         </motion.div>
       </main>
