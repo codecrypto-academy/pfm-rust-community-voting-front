@@ -29,7 +29,7 @@ const FormField: React.FC<FormFieldProps> = ({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder || label}
         required={required}
-        className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-purple focus:border-transparent transition-all"
+        className="peer w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-purple focus:border-transparent transition-all"
       />
       <label className="text-gray-600">
         {label}

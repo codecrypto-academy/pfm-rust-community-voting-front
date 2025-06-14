@@ -114,7 +114,7 @@
   }
   
   .form-floating input {
-    @apply peer placeholder-transparent;
+    @apply placeholder-transparent;
   }
   
   .form-floating label {
