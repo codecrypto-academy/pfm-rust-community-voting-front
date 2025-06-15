@@ -4,158 +4,159 @@ import { communityService } from '@/lib/communityService';
 import { Member } from '@/services/types';
 import { useToast } from '@/hooks/use-toast';
 import { useWalletExt } from '@/hooks/useAnchorWalletAdapter';
+import { PublicKey } from '@solana/web3.js';
 
 const Admin = () => {
-  const { connected, publicKey, anchorWallet } = useWalletExt();
-  const { toast } = useToast();
-  
-  const [communityName, setCommunityName] = useState('');
-  const [communityDescription, setCommunityDescription] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [pendingMembers, setPendingMembers] = useState<Member[]>([]);
-  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
-  const [stats, _setStats] = useState({
-    activeCommunities: 0,
-    totalMembers: 0,
-    activePolls: 0,
-    totalVotes: 0,
-  });
+    const { connected, publicKey, anchorWallet } = useWalletExt();
+    const { toast } = useToast();
 
-  // Fetch pending members when component mounts
-  useEffect(() => {
-    if (connected && communityName) {
-      fetchPendingMembers();
-    }
-  }, [connected, communityName]);
-
-  const fetchPendingMembers = async () => {
-    if (!communityName.trim()) return;
-    
-    setIsLoadingMembers(true);
-    try {
-      const members = await communityService.fetchPendingMembers(communityName);
-      setPendingMembers(members);
-    } catch (error) {
-      console.error('Error fetching pending members:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch pending members",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoadingMembers(false);
-    }
-  };
-
-  const handleInitializeCommunity = async () => {
-    if (!connected || !publicKey) {
-      toast({
-        title: "Wallet not connected",
-        description: "Please connect your wallet to continue",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!communityName.trim() || !communityDescription.trim()) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
-    
-    try {
-      await communityService.initializeCommunity(
-        communityName,
-        communityDescription,
-        anchorWallet
-      );
-      
-      toast({
-        title: "Community initialized!",
-        description: `${communityName} has been successfully created`,
-      });
-      
-      setCommunityName('');
-      setCommunityDescription('');
-    } catch (error) {
-      console.error('Error initializing community:', error);
-      toast({
-        title: "Error",
-        description: "Failed to initialize community. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleApproveMember = async (memberAddress: string) => {
-    if (!communityName.trim()) {
-      toast({
-        title: "Error",
-        description: "Please specify a community name first",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    try {
-      await communityService.approveMembership(
-        communityName,
-        memberAddress,
-        anchorWallet
-      );
-      
-      toast({
-        title: "Member approved!",
-        description: `Member ${memberAddress.slice(0, 8)}... has been approved`,
-      });
-      
-      // Refresh pending members list
-      fetchPendingMembers();
-    } catch (error) {
-      console.error('Error approving member:', error);
-      toast({
-        title: "Error",
-        description: "Failed to approve member",
-        variant: "destructive"
-      });
-    }
-  };
-
-  const handleRejectMember = async (memberAddress: string) => {
-    // For now, just remove from the list (in a real implementation, you might want to add a reject function)
-    setPendingMembers(prev => prev.filter(member => member.address !== memberAddress));
-    toast({
-      title: "Member rejected",
-      description: `Member ${memberAddress.slice(0, 8)}... has been rejected`,
+    const [communityName, setCommunityName] = useState('');
+    const [communityDescription, setCommunityDescription] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [pendingMembers, setPendingMembers] = useState<Member[]>([]);
+    const [isLoadingMembers, setIsLoadingMembers] = useState(false);
+    const [stats, _setStats] = useState({
+        activeCommunities: 0,
+        totalMembers: 0,
+        activePolls: 0,
+        totalVotes: 0,
     });
-  };
 
-  if (!connected) {
+    // Fetch pending members when component mounts
+    useEffect(() => {
+        if (connected && communityName) {
+            fetchPendingMembers();
+        }
+    }, [connected, communityName]);
+
+    const fetchPendingMembers = async () => {
+        if (!communityName.trim()) return;
+
+        setIsLoadingMembers(true);
+        try {
+            const members = await communityService.fetchPendingMembers(communityName);
+            setPendingMembers(members);
+        } catch (error) {
+            console.error('Error fetching pending members:', error);
+            toast({
+                title: "Error",
+                description: "Failed to fetch pending members",
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoadingMembers(false);
+        }
+    };
+
+    const handleInitializeCommunity = async () => {
+        if (!connected || !publicKey) {
+            toast({
+                title: "Wallet not connected",
+                description: "Please connect your wallet to continue",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        if (!communityName.trim() || !communityDescription.trim()) {
+            toast({
+                title: "Missing information",
+                description: "Please fill in all required fields",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            await communityService.initializeCommunity(
+                communityName,
+                communityDescription,
+                anchorWallet
+            );
+
+            toast({
+                title: "Community initialized!",
+                description: `${communityName} has been successfully created`,
+            });
+
+            setCommunityName('');
+            setCommunityDescription('');
+        } catch (error) {
+            console.error('Error initializing community:', error);
+            toast({
+                title: "Error",
+                description: "Failed to initialize community. Please try again.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleApproveMember = async (memberAddress: PublicKey) => {
+        if (!communityName.trim()) {
+            toast({
+                title: "Error",
+                description: "Please specify a community name first",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        try {
+            await communityService.approveMembership(
+                communityName,
+                memberAddress,
+                anchorWallet
+            );
+
+            toast({
+                title: "Member approved!",
+                description: `Member ${memberAddress.toString().slice(0, 8)}... has been approved`,
+            });
+
+            // Refresh pending members list
+            fetchPendingMembers();
+        } catch (error) {
+            console.error('Error approving member:', error);
+            toast({
+                title: "Error",
+                description: "Failed to approve member",
+                variant: "destructive"
+            });
+        }
+    };
+
+    const handleRejectMember = async (memberAddress: PublicKey) => {
+        // For now, just remove from the list (in a real implementation, you might want to add a reject function)
+        setPendingMembers(prev => prev.filter(member => member.address !== memberAddress));
+        toast({
+            title: "Member rejected",
+            description: `Member ${memberAddress.toString().slice(0, 8)}... has been rejected`,
+        });
+    };
+
+    if (!connected) {
+        return (
+           <div className="min-h-screen bg-gray-50">
+             <div className="flex items-center justify-center min-h-[80vh]">
+               <div className="text-center max-w-md bg-white p-8 rounded-2xl shadow-lg">
+                 <h2 className="text-2xl font-bold text-gray-800 mb-4">
+                   Admin Access Required
+                 </h2>
+                 <p className="text-gray-600 mb-6">
+                   Please connect your wallet to access the admin dashboard
+                 </p>
+                 <div className="w-12 h-12 bg-purple-100 rounded-full mx-auto animate-pulse"></div>
+               </div>
+             </div>
+           </div>
+         );
+    }
+
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="text-center max-w-md bg-white p-8 rounded-2xl shadow-lg">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
-              Admin Access Required
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Please connect your wallet to access the admin dashboard
-            </p>
-            <div className="w-12 h-12 bg-purple-100 rounded-full mx-auto animate-pulse"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto px-6 py-12">
         <motion.div
@@ -263,7 +264,7 @@ const Admin = () => {
                 <div className="space-y-4">
                   {pendingMembers.map((member, index) => (
                     <motion.div
-                      key={member.address}
+                      key={member.address.toString()}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.6 + index * 0.1 }}
@@ -271,7 +272,7 @@ const Admin = () => {
                     >
                       <div>
                         <p className="font-mono text-sm text-gray-800">
-                          {member.address.slice(0, 8)}...{member.address.slice(-8)}
+                          {member.address.toString().slice(0, 8)}...{member.address.toString().slice(-8)}
                         </p>
                         <p className="text-xs text-gray-500">
                           Requested: {member.joinedAt.toLocaleDateString()}

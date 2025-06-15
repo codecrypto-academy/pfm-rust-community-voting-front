@@ -4,7 +4,6 @@ import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { appConfig } from '../config/app';
 import { PROGRAM_ID } from '../utils/constants';
-import { communityService } from '@/lib/communityService';
 
 export interface Community {
   id: string;

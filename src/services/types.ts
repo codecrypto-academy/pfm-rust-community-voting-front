@@ -1,37 +1,46 @@
-export interface Member {
-  address: string;
-  joinedAt: Date;
-}
+import * as anchor from "@coral-xyz/anchor";
 
 export interface Community {
-  name: string;
-  description: string;
-  admin: string;
-  memberCount: number;
-  totalPolls: number;
+    admin: anchor.web3.PublicKey;
+    name: string;
+    description: string;
+    memberCount: anchor.BN;
+    totalPolls: anchor.BN;
+    bump?: number;
+}
+
+export interface Member {
+    community?: anchor.web3.PublicKey;
+    address: anchor.web3.PublicKey;
+    isApproved: boolean;
+    joinedAt: anchor.BN;
+    bump?: number;
 }
 
 export interface Poll {
-  id: string;
-  question: string;
-  options: string[];
-  voteCounts: number[];
-  endTime: Date;
-  isActive: boolean;
-  totalVotes: number;
-  creator: string;
+    id?: any,
+    community: anchor.web3.PublicKey;
+    creator: anchor.web3.PublicKey;
+    question: string;
+    options: string[];
+    voteCounts: anchor.BN[];
+    endTime: anchor.BN;
+    totalVotes: anchor.BN;
+    isActive: boolean;
+    bump?: number;
 }
 
 export interface Vote {
-  poll: string;
-  voter: string;
-  optionIndex: number;
-  votedAt: Date;
+    poll: anchor.web3.PublicKey;
+    voter: anchor.web3.PublicKey;
+    optionIndex: number;
+    votedAt: anchor.BN;
+    bump?: number;
 }
 
 export interface MembershipStatus {
-  isMember: boolean;
-  isApproved: boolean;
+    isMember: boolean;
+    isApproved: boolean;
 }
 
 /**

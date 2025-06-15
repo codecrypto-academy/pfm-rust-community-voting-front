@@ -1,21 +1,22 @@
 import * as anchor from "@coral-xyz/anchor";
-import { AnchorProvider, Program, Idl, Wallet } from '@coral-xyz/anchor';
-import { Connection, PublicKey, SystemProgram } from '@solana/web3.js';
+import { AnchorProvider, Program, Idl } from '@coral-xyz/anchor';
+import { Connection, PublicKey } from '@solana/web3.js';
 import idl from '@/idl/community_management.json';
 import { getCommunityPDA, getMembershipPDA, getPollPDA, getVotePDA } from '@/utils/pda';
 import { appConfig } from '@/config/app';
 import { Member, Poll, Vote, Community, CommunityManagement } from '@/services/types';
+import { WalletAnchorType } from '@/hooks/useAnchorWalletAdapter';
 
 const CLUSTER_URL = import.meta.env.VITE_SOLANA_CLUSTER;
 
-const getAnchorProgram = (wallet: Wallet): Program<CommunityManagement> => {
+const getAnchorProgram = (wallet: WalletAnchorType): Program<CommunityManagement> => {
     const connection = new Connection(CLUSTER_URL, 'confirmed');
     const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
     return new Program<CommunityManagement>(idl as Idl, provider);
 };
 
 export const communityService = {
-    async initializeCommunity(name: string, description: string, wallet: any): Promise<void> {
+    async initializeCommunity(name: string, description: string, wallet: WalletAnchorType): Promise<void> {
         if (appConfig.useMockData) {
             console.log('[MOCK] Initializing community', name);
             return new Promise((resolve) => setTimeout(resolve, 1000));
@@ -34,12 +35,12 @@ export const communityService = {
         .rpc();
     },
 
-    async fetchCommunity(name: string, wallet?: any): Promise<Community | null> {
+    async fetchCommunity(name: string, wallet?: WalletAnchorType): Promise<Community | null> {
         if (appConfig.useMockData) {
             return {
                 name,
                 description: 'Mock community description',
-                admin: 'MockAdmin123...',
+                admin: new PublicKey('MockAdmin123...'),
                 memberCount: 5,
                 totalPolls: 3,
             };
@@ -53,7 +54,7 @@ export const communityService = {
             return {
                 name: communityAccount.name,
                 description: communityAccount.description,
-                admin: communityAccount.admin.toBase58(),
+                admin: new PublicKey(communityAccount.admin.toBase58()),
                 memberCount: communityAccount.memberCount.toNumber(),
                 totalPolls: communityAccount.totalPolls.toNumber(),
             };
@@ -63,11 +64,20 @@ export const communityService = {
         }
     },
 
-    async fetchPendingMembers(name: string, wallet?: any): Promise<Member[]> {
+    async fetchPendingMembers(name: string, wallet?: WalletAnchorType): Promise<Member[]> {
         if (appConfig.useMockData) {
             return [
-                { address: '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU', joinedAt: new Date() },
-                { address: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM', joinedAt: new Date() },
+                { 
+                    address: new PublicKey('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU'),
+                    joinedAt: new Date(),
+                    isApproved: false,
+
+                },
+                { 
+                    address: new PublicKey('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM'),
+                    joinedAt: new Date(),
+                    isApproved: false
+                },
             ];
         }
 
@@ -86,10 +96,11 @@ export const communityService = {
             ]);
 
             return memberships
-            .filter((m) => !m.account.isApproved)
+            .filter((member) => !member.account.isApproved)
             .map((m) => ({
-                address: m.account.member.toBase58(),
+                address: new PublicKey(m.account.member.toBase58()),
                 joinedAt: new Date(m.account.joinedAt.toNumber() * 1000),
+                isApproved: m.account.isApproved
             }));
         } catch (error) {
             console.error('Error fetching pending members:', error);
@@ -97,7 +108,7 @@ export const communityService = {
         }
     },
 
-    async approveMembership(name: string, memberAddress: string, wallet: any): Promise<void> {
+    async approveMembership(name: string, memberAddress: PublicKey, wallet: WalletAnchorType): Promise<void> {
         if (appConfig.useMockData) {
             console.log('[MOCK] Approving member:', memberAddress);
             return new Promise((resolve) => setTimeout(resolve, 1000));
@@ -118,7 +129,7 @@ export const communityService = {
         .rpc();
     },
 
-    async joinCommunity(name: string, wallet: any): Promise<void> {
+    async joinCommunity(name: string, wallet: WalletAnchorType): Promise<void> {
         if (appConfig.useMockData) {
             console.log('[MOCK] Joining community:', name);
             return new Promise((resolve) => setTimeout(resolve, 1000));
@@ -141,8 +152,8 @@ export const communityService = {
         communityName: string,
         question: string,
         options: string[],
-        endTime: Date,
-        wallet: any
+        endTime: anchor.BN,
+        wallet: WalletAnchorType
     ): Promise<void> {
         if (appConfig.useMockData) {
             console.log('[MOCK] Creating poll:', question);
@@ -169,18 +180,18 @@ export const communityService = {
         .rpc();
     },
 
-    async fetchPolls(communityName: string, wallet?: any): Promise<Poll[]> {
+    async fetchPolls(communityName: string, wallet?: WalletAnchorType): Promise<Poll[]> {
         if (appConfig.useMockData) {
             return [
                 {
-                    id: '1',
+                    community: new PublicKey('0x123'),
                     question: 'What should be our next community project?',
                     options: ['Website', 'Mobile App', 'Discord Bot'],
                     voteCounts: [5, 8, 3],
                     endTime: new Date(Date.now() + 86400000),
                     isActive: true,
                     totalVotes: 16,
-                    creator: 'Creator123...',
+                    creator: new PublicKey('Creator123...'),
                 },
             ];
         }
@@ -199,15 +210,16 @@ export const communityService = {
                 },
             ]);
 
-            return polls.map((p, index) => ({
-                id: index.toString(),
+            return polls.map((p, _index) => ({
+                id: p,
+                community: new PublicKey(p.account.community),
+                creator: new PublicKey(p.account.creator.toBase58()),
                 question: p.account.question,
                 options: p.account.options,
                 voteCounts: p.account.voteCounts.map((count: any) => count.toNumber()),
-                    endTime: new Date(p.account.endTime.toNumber() * 1000),
+                endTime: new Date(p.account.endTime.toNumber() * 1000),
                 isActive: p.account.isActive,
                 totalVotes: p.account.totalVotes.toNumber(),
-                creator: p.account.creator.toBase58(),
             }));
         } catch (error) {
             console.error('Error fetching polls:', error);
@@ -219,7 +231,7 @@ export const communityService = {
         communityName: string,
         pollIndex: number,
         optionIndex: number,
-        wallet: any
+        wallet: WalletAnchorType
     ): Promise<void> {
         if (appConfig.useMockData) {
             console.log('[MOCK] Casting vote:', { pollIndex, optionIndex });
@@ -245,7 +257,7 @@ export const communityService = {
     async closePoll(
         communityName: string,
         pollIndex: number,
-        wallet: any
+        wallet: WalletAnchorType
     ): Promise<void> {
         if (appConfig.useMockData) {
             console.log('[MOCK] Closing poll:', pollIndex);
@@ -268,7 +280,7 @@ export const communityService = {
 
     async checkMembershipStatus(
         communityName: string,
-        wallet: any
+        wallet: WalletAnchorType
     ): Promise<{ isMember: boolean; isApproved: boolean } | null> {
         if (appConfig.useMockData) {
             return { isMember: true, isApproved: true };
