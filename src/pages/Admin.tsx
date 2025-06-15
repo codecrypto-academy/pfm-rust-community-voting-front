@@ -97,7 +97,7 @@ const Admin = () => {
     };
 
     const handleApproveMember = async (memberAddress: PublicKey) => {
-        if (!communityName.trim()) {
+        if (!communityNameManage.trim()) {
             toast({
                 title: "Error",
                 description: "Please specify a community name first",
@@ -108,7 +108,7 @@ const Admin = () => {
 
         try {
             await communityService.approveMembership(
-                communityName,
+                communityNameManage,
                 memberAddress,
                 anchorWallet
             );

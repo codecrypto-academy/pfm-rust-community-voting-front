@@ -22,7 +22,7 @@ const Index = () => {
 
   useEffect(() => {
     if (community) {
-      console.log('✅ Live community data from Solana:', community);
+      console.log(' Live community data from Solana:', community);
     }
     if (error) {
       console.error('⚠️ Error loading community:', error);
@@ -110,9 +110,27 @@ const Index = () => {
                   </h3>
                   <p className="text-gray-600 mb-4">{community.description}</p>
                   {membershipStatus?.isMember ? (
-                    <p className="text-green-600 font-semibold text-center">
-                      You're already a member!
-                    </p>
+                    membershipStatus.isApproved ? (
+                      <>
+                        <p className="text-green-600 font-semibold text-center mb-4">
+                          You are a verified community member.
+                        </p>
+                        <Button
+                          className="w-full"
+                          onClick={() => {
+                            if (selectedCommunity) {
+                              window.location.href = `/community/${selectedCommunity}`;
+                            }
+                          }}
+                        >
+                          Go to Community
+                        </Button>
+                      </>
+                    ) : (
+                      <p className="text-yellow-600 font-medium text-center">
+                        Your membership is under review. Please check back later.
+                      </p>
+                    )
                   ) : (
                     <Button onClick={actions.joinCommunity} className="w-full">
                       Request to Join
