@@ -1,65 +1,46 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCommunity } from '@/hooks/useCommunity';
 import { motion } from 'framer-motion';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletExt } from '@/hooks/useAnchorWalletAdapter';
 import Navbar from '../components/Navbar';
 import Card from '../components/Card';
 import Button from '../components/Button';
-import PollCard from '../components/PollCard';
 
 const Index = () => {
-  const { connected } = useWallet();
-  const { community, polls, membershipStatus, isLoading, error, actions } = useCommunity('pfm-prueba');
+  const { connected } = useWalletExt();
+
+  const [inputName, setInputName] = useState('');
+  const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
+
+  const {
+    community,
+    membershipStatus,
+    isLoading,
+    error,
+    actions,
+  } = useCommunity(selectedCommunity || '');
+
   useEffect(() => {
-      if (community) {
-          console.log('✅ Live community data from Solana:', community);
-      }
-      if (error) {
-          console.error('❌ Error loading community:', error);
-      }
+    if (community) {
+      console.log('✅ Live community data from Solana:', community);
+    }
+    if (error) {
+      console.error('⚠️ Error loading community:', error);
+    }
   }, [community, error]);
 
-  // Mock data for demonstration
-  // const mockPolls = [
-  //   {
-  //     id: '1',
-  //     question: 'Should we implement a new rewards system for active community members?',
-  //     options: ['Yes, with token rewards', 'Yes, with NFT rewards', 'No, keep current system', 'Need more discussion'],
-  //     endTime: new Date(Date.now() + 86400000), // 24 hours from now
-  //     isActive: true
-  //   },
-  //   {
-  //     id: '2',
-  //     question: 'What should be our next community event?',
-  //     options: ['Virtual meetup', 'AMA session', 'Workshop', 'Gaming tournament'],
-  //     endTime: new Date(Date.now() + 172800000), // 48 hours from now
-  //     isActive: true
-  //   },
-  //   {
-  //     id: '3',
-  //     question: 'Community governance voting mechanism',
-  //     options: ['Quadratic voting', 'One person one vote', 'Token-weighted voting'],
-  //     endTime: new Date(Date.now() - 86400000), // 24 hours ago
-  //     isActive: false
-  //   }
-  // ];
-
-  const handleJoinCommunity = () => {
-    // Navigate to community page
-    window.location.href = '/community/main';
-  };
-
-  const handleViewPoll = (pollId: string) => {
-    window.location.href = `/poll/${pollId}`;
+  const handleJoin = () => {
+    if (!inputName.trim()) return;
+    setSelectedCommunity(inputName.trim());
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero Section */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-16"
@@ -68,10 +49,10 @@ const Index = () => {
             Decentralized Community Management
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Connect your wallet to join communities, create polls, and participate in decentralized governance. 
+            Connect your wallet to join communities, create polls, and participate in decentralized governance.
             Built on Solana for fast, secure, and transparent decision-making.
           </p>
-          
+
           {!connected ? (
             <motion.div
               initial={{ opacity: 0 }}
@@ -79,37 +60,73 @@ const Index = () => {
               transition={{ delay: 0.3 }}
               className="bg-accent-purple/10 border border-accent-purple/20 rounded-2xl p-8 max-w-md mx-auto"
             >
-              <h3 className="text-lg font-semibold text-charcoal mb-3">
-                Get Started
-              </h3>
+              <h3 className="text-lg font-semibold text-charcoal mb-3">Get Started</h3>
               <p className="text-gray-600 mb-4">
                 Connect your Solana wallet to access community features
               </p>
               <div className="w-8 h-8 bg-accent-purple rounded-full mx-auto animate-pulse"></div>
             </motion.div>
-          ) : (
+          ) : !selectedCommunity ? (
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.3 }}
+              className="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-lg"
             >
-              <Button 
-                size="lg"
-                onClick={handleJoinCommunity}
-                className="mb-4"
-              >
-                Join Main Community
+              <h3 className="text-xl font-semibold text-charcoal mb-4">
+                Enter Community Name
+              </h3>
+              <input
+                type="text"
+                className="w-full border border-gray-300 rounded-lg px-4 py-2 mb-4"
+                value={inputName}
+                onChange={(e) => setInputName(e.target.value)}
+                placeholder="e.g. main-2"
+              />
+              <Button onClick={handleJoin} className="w-full">
+                Join Community
               </Button>
-              <p className="text-gray-600">
-                Welcome back! Ready to participate in governance?
-              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.3 }}
+              className="max-w-md mx-auto bg-white p-6 rounded-2xl shadow-lg"
+            >
+              {isLoading ? (
+                <p className="text-gray-600 text-center">Loading community...</p>
+              ) : error ? (
+                <>
+                  <p className="text-red-500 text-center mb-4">{error}</p>
+                  <Button variant="outline" onClick={() => setSelectedCommunity(null)}>
+                    Try Another Name
+                  </Button>
+                </>
+              ) : community ? (
+                <>
+                  <h3 className="text-xl font-semibold text-charcoal mb-2">
+                    {community.name}
+                  </h3>
+                  <p className="text-gray-600 mb-4">{community.description}</p>
+                  {membershipStatus?.isMember ? (
+                    <p className="text-green-600 font-semibold text-center">
+                      You're already a member!
+                    </p>
+                  ) : (
+                    <Button onClick={actions.joinCommunity} className="w-full">
+                      Request to Join
+                    </Button>
+                  )}
+                </>
+              ) : null}
             </motion.div>
           )}
         </motion.div>
 
         {/* Features Section */}
         {connected && (
-          <motion.section 
+          <motion.section
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
@@ -118,7 +135,7 @@ const Index = () => {
             <h2 className="text-3xl font-bold text-charcoal text-center mb-12">
               Community Features
             </h2>
-            
+
             <div className="grid md:grid-cols-3 gap-8">
               <Card>
                 <div className="text-center">
@@ -165,40 +182,6 @@ const Index = () => {
           </motion.section>
         )}
 
-        {/* Active Polls Section */}
-        {connected && (
-          <motion.section
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
-          >
-            <div className="flex items-center justify-between mb-8">
-              <h2 className="text-3xl font-bold text-charcoal">
-                Active Polls
-              </h2>
-              <Button variant="outline" onClick={() => window.location.href = '/admin'}>
-                Admin Dashboard
-              </Button>
-            </div>
-            
-            {/* <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {mockPolls.map((poll, index) => (
-                <motion.div
-                  key={poll.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.8 + index * 0.1 }}
-                >
-                  <PollCard
-                    {...poll}
-                    onView={() => handleViewPoll(poll.id)}
-                    onVote={poll.isActive ? () => handleViewPoll(poll.id) : undefined}
-                  />
-                </motion.div>
-              ))}
-            </div> */}
-          </motion.section>
-        )}
       </main>
     </div>
   );

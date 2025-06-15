@@ -12,6 +12,7 @@ const Admin = () => {
 
     const [communityName, setCommunityName] = useState('');
     const [communityDescription, setCommunityDescription] = useState('');
+    const [communityNameManage, setCommunityNameManage] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [pendingMembers, setPendingMembers] = useState<Member[]>([]);
     const [isLoadingMembers, setIsLoadingMembers] = useState(false);
@@ -24,17 +25,17 @@ const Admin = () => {
 
     // Fetch pending members when component mounts
     useEffect(() => {
-        if (connected && communityName) {
+        if (connected && communityNameManage) {
             fetchPendingMembers();
         }
-    }, [connected, communityName]);
+    }, [connected, communityNameManage]);
 
     const fetchPendingMembers = async () => {
-        if (!communityName.trim()) return;
+        if (!communityNameManage.trim()) return;
 
         setIsLoadingMembers(true);
         try {
-            const members = await communityService.fetchPendingMembers(communityName);
+            const members = await communityService.fetchPendingMembers(communityNameManage, anchorWallet);
             setPendingMembers(members);
         } catch (error) {
             console.error('Error fetching pending members:', error);
@@ -230,12 +231,34 @@ const Admin = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4 }}
           >
+
+                     <div className="mb-6">
+                            <label className="block text-gray-700 text-sm font-medium mb-2">
+                              Community Name to Manage
+                            </label>
+                            <div className="flex items-center space-x-4">
+                             <input
+                               type="text"
+                               value={communityNameManage}
+                               onChange={(e) => setCommunityNameManage(e.target.value)}
+                               placeholder="Enter community name (e.g. main-2)"
+                               className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                             />
+                             <button
+                               onClick={fetchPendingMembers}
+                               disabled={!communityNameManage || isLoadingMembers}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 transition-all"
+                              >
+                                {isLoadingMembers ? 'Loading...' : 'Load'}
+                              </button>
+                            </div>
+                            </div>
             <div className="bg-white p-8 rounded-2xl shadow-lg">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-semibold text-gray-800">
                   Pending Members
                 </h2>
-                {communityName && (
+                {communityNameManage && (
                   <button
                     onClick={fetchPendingMembers}
                     disabled={isLoadingMembers}
@@ -246,7 +269,7 @@ const Admin = () => {
                 )}
               </div>
               
-              {!communityName ? (
+              {!communityNameManage ? (
                 <div className="text-center py-8">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <div className="w-8 h-8 bg-gray-300 rounded-full"></div>

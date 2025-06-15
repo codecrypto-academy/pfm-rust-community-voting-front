@@ -1,18 +1,20 @@
-
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useParams } from 'react-router-dom';
-import { useWallet } from '@solana/wallet-adapter-react';
 import Navbar from '../components/Navbar';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import FormField from '../components/FormField';
 import PollCard from '../components/PollCard';
 import { useToast } from '@/hooks/use-toast';
+import { communityService } from '@/lib/communityService';
+import { useWalletExt } from '@/hooks/useAnchorWalletAdapter';
+
 
 const Community = () => {
   const { id } = useParams();
-  const { connected, publicKey } = useWallet();
+  console.log('id: ', id);
+  const { connected, publicKey, anchorWallet } = useWalletExt();
   const { toast } = useToast();
   
   const [isMember, setIsMember] = useState(false);

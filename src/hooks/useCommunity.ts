@@ -1,16 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWalletExt } from '@/hooks/useAnchorWalletAdapter';
 import { communityService } from '@/lib/communityService';
 import { Community, Poll, MembershipStatus } from '@/services/types';
 
 export const useCommunity = (communityName: string) => {
-    const { connected, publicKey, signTransaction, signAllTransactions } = useWallet();
-
-    const walletForAnchor = {
-        publicKey,
-        signTransaction,
-        signAllTransactions,
-    };
+    const { connected, publicKey, anchorWallet } = useWalletExt();
 
     const [community, setCommunity] = useState<Community | null>(null);
     const [polls, setPolls] = useState<Poll[]>([]);
@@ -53,7 +47,7 @@ export const useCommunity = (communityName: string) => {
         try {
             const status = await communityService.checkMembershipStatus(
                 communityName,
-                walletForAnchor
+                anchorWallet
             );
             setMembershipStatus(status);
         } catch (err) {
@@ -67,7 +61,7 @@ export const useCommunity = (communityName: string) => {
         }
 
         try {
-            await communityService.joinCommunity(communityName, walletForAnchor);
+            await communityService.joinCommunity(communityName, anchorWallet);
             await fetchMembershipStatus(); // Refresh status
             return true;
         } catch (err) {
@@ -91,7 +85,7 @@ export const useCommunity = (communityName: string) => {
                 question,
                 options,
                 endTime,
-                { publicKey }
+                anchorWallet
             );
             await fetchPolls(); // Refresh polls
             return true;
@@ -111,7 +105,7 @@ export const useCommunity = (communityName: string) => {
                 communityName,
                 pollIndex,
                 optionIndex,
-                walletForAnchor
+                anchorWallet
             );
             await fetchPolls(); // Refresh polls
             return true;
@@ -127,7 +121,7 @@ export const useCommunity = (communityName: string) => {
         }
 
         try {
-            await communityService.closePoll(communityName, pollIndex, { publicKey });
+            await communityService.closePoll(communityName, pollIndex, anchorWallet);
             await fetchPolls(); // Refresh polls
             return true;
         } catch (err) {
