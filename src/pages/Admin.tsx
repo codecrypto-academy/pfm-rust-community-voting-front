@@ -244,13 +244,13 @@ const Admin = () => {
                                placeholder="Enter community name (e.g. main-2)"
                                className="flex-1 px-4 py-2 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
                              />
-                             <button
+                             {/*<button
                                onClick={fetchPendingMembers}
                                disabled={!communityNameManage || isLoadingMembers}
                                 className="px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:opacity-50 transition-all"
                               >
                                 {isLoadingMembers ? 'Loading...' : 'Load'}
-                              </button>
+                              </button>*/}
                             </div>
                             </div>
             <div className="bg-white p-8 rounded-2xl shadow-lg">
@@ -264,7 +264,7 @@ const Admin = () => {
                     disabled={isLoadingMembers}
                     className="text-purple-600 hover:text-purple-700 text-sm font-medium"
                   >
-                    {isLoadingMembers ? 'Loading...' : 'Refresh'}
+                    {isLoadingMembers ? 'Refresh' : 'Refresh'}
                   </button>
                 )}
               </div>
