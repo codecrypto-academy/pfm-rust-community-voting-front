@@ -24,7 +24,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/community/:id" element={<Community />} />
-            <Route path="/poll/:id" element={<Poll />} />
+            <Route path="/poll/:community/:id" element={<Poll />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

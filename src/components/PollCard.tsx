@@ -1,31 +1,34 @@
-
 import React from 'react';
-import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import Card from './Card';
 import Button from './Button';
 
 interface PollCardProps {
-  id: string;
+  id: string; // poll PDA as base58 string
+  communityName: string; // required for URL construction
   question: string;
   options: string[];
   endTime: Date;
   isActive: boolean;
-  onVote?: () => void;
-  onView?: () => void;
 }
 
 const PollCard: React.FC<PollCardProps> = ({
   id,
+  communityName,
   question,
   options,
   endTime,
   isActive,
-  onVote,
-  onView
 }) => {
+  const navigate = useNavigate();
+
   const timeLeft = endTime.getTime() - new Date().getTime();
   const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
   const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+
+  const handleView = () => {
+    navigate(`/poll/${communityName}/${id}`);
+  };
 
   return (
     <Card className={`${!isActive ? 'opacity-60' : ''}`}>
@@ -65,20 +68,11 @@ const PollCard: React.FC<PollCardProps> = ({
         )}
 
         <div className="flex space-x-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onView}
-            className="flex-1"
-          >
+          <Button variant="outline" size="sm" onClick={handleView} className="flex-1">
             View Details
           </Button>
-          {isActive && onVote && (
-            <Button
-              size="sm"
-              onClick={onVote}
-              className="flex-1"
-            >
+          {isActive && (
+            <Button size="sm" onClick={handleView} className="flex-1">
               Vote Now
             </Button>
           )}

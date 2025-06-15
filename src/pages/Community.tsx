@@ -36,6 +36,15 @@ const Community = () => {
       return;
     }
 
+    if (pollOptions.length > 4) {
+      toast({
+        title: "Too many options",
+        description: "Polls can have a maximum of 4 options",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       await actions.createPoll(pollQuestion, pollOptions, new Date(pollEndTime));
       toast({
@@ -56,7 +65,9 @@ const Community = () => {
   };
 
   const addPollOption = () => {
-    setPollOptions([...pollOptions, '']);
+    if (pollOptions.length < 4) {
+      setPollOptions([...pollOptions, '']);
+    }
   };
 
   const updatePollOption = (index, value) => {
@@ -186,6 +197,7 @@ const Community = () => {
                     size="sm"
                     onClick={addPollOption}
                     className="mt-3"
+                    disabled={pollOptions.length >= 4}
                   >
                     Add Option
                   </Button>
@@ -229,16 +241,19 @@ const Community = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {polls.map((poll, index) => (
               <motion.div
-                key={poll.id}
+                key={poll.id.toBase58?.() || index}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 + index * 0.1 }}
               >
-                <PollCard
-                  {...poll}
-                  onView={() => window.location.href = `/poll/${poll.id}`}
-                  onVote={poll.isActive ? () => window.location.href = `/poll/${poll.id}` : undefined}
-                />
+              <PollCard
+                id={poll.id.toBase58()}
+                communityName={community.name}
+                question={poll.question}
+                options={poll.options}
+                endTime={poll.endTime}
+                isActive={poll.isActive}
+              />
               </motion.div>
             ))}
           </div>
