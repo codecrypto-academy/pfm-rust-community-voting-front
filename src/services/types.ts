@@ -17,15 +17,20 @@ export interface Member {
     bump?: number;
 }
 
+export interface MembershipStatus {
+    isMember: boolean;
+    isApproved: boolean;
+}
+
 export interface Poll {
-    id?: any,
+    id?: anchor.web3.PublicKey,
     community: anchor.web3.PublicKey;
     creator: anchor.web3.PublicKey;
     question: string;
     options: string[];
-    voteCounts: anchor.BN[];
-    endTime: anchor.BN;
-    totalVotes: anchor.BN;
+    voteCounts: number[];
+    endTime: Date;
+    totalVotes: number;
     isActive: boolean;
     bump?: number;
 }
@@ -36,11 +41,6 @@ export interface Vote {
     optionIndex: number;
     votedAt: anchor.BN;
     bump?: number;
-}
-
-export interface MembershipStatus {
-    isMember: boolean;
-    isApproved: boolean;
 }
 
 /**

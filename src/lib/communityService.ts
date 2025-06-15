@@ -210,16 +210,16 @@ export const communityService = {
                 },
             ]);
 
-            return polls.map((p, _index) => ({
-                id: p,
-                community: new PublicKey(p.account.community),
-                creator: new PublicKey(p.account.creator.toBase58()),
+            return polls.map((p) => ({
+                id: p.publicKey,
+                community: p.account.community,
+                creator: p.account.creator,
                 question: p.account.question,
                 options: p.account.options,
-                voteCounts: p.account.voteCounts.map((count: any) => count.toNumber()),
+                voteCounts: p.account.voteCounts.map((bn: anchor.BN) => bn.toNumber()),
                 endTime: new Date(p.account.endTime.toNumber() * 1000),
-                isActive: p.account.isActive,
                 totalVotes: p.account.totalVotes.toNumber(),
+                isActive: p.account.isActive,
             }));
         } catch (error) {
             console.error('Error fetching polls:', error);
