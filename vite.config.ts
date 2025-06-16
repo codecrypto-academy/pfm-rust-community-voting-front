@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  base: '/pfm-rust-community-voting-front/',
   plugins: [
     react(),
     mode === 'development' &&
