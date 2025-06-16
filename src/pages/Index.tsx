@@ -5,12 +5,16 @@ import { useWalletExt } from '@/hooks/useAnchorWalletAdapter';
 import Navbar from '../components/Navbar';
 import Card from '../components/Card';
 import Button from '../components/Button';
+import { useNavigate } from 'react-router-dom';
+
 
 const Index = () => {
   const { connected } = useWalletExt();
 
   const [inputName, setInputName] = useState('');
   const [selectedCommunity, setSelectedCommunity] = useState<string | null>(null);
+
+  const navigate = useNavigate();
 
   const {
     community,
@@ -119,7 +123,7 @@ const Index = () => {
                           className="w-full"
                           onClick={() => {
                             if (selectedCommunity) {
-                              window.location.href = `/community/${selectedCommunity}`;
+                              navigate(`/community/${selectedCommunity}`);
                             }
                           }}
                         >

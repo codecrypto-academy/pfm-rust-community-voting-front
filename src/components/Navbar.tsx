@@ -1,8 +1,7 @@
-
-import React from 'react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   const { connected } = useWallet();
@@ -24,12 +23,12 @@ const Navbar = () => {
           
           {connected && (
             <div className="hidden md:flex space-x-6">
-              <a href="/" className="text-gray-600 hover:text-accent-purple transition-colors">
+              <Link to="/" className="text-gray-600 hover:text-accent-purple transition-colors">
                 Home
-              </a>
-              <a href="/admin" className="text-gray-600 hover:text-accent-purple transition-colors">
+              </Link>
+              <Link to="/admin" className="text-gray-600 hover:text-accent-purple transition-colors">
                 Admin
-              </a>
+              </Link>
             </div>
           )}
         </div>

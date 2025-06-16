@@ -13,13 +13,15 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+const mainPath = import.meta.env.VITE_BASE_URL || '/';
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <WalletContextProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter basename={mainPath}>
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/admin" element={<Admin />} />
