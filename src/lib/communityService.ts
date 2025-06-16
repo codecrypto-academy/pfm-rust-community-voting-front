@@ -23,14 +23,16 @@ export const communityService = {
         }
 
         const program = getAnchorProgram(wallet);
-        // const [communityPda] = getCommunityPDA(name);
+        const [communityPda] = getCommunityPDA(name);
 
         console.log("Program ID being used:", program.programId.toBase58());
 
         await program.methods
         .initializeCommunity(name, description)
-        .accounts({
+        .accountsStrict({
+            community: communityPda,
             admin: wallet.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
     },
@@ -121,7 +123,7 @@ export const communityService = {
 
         await program.methods
         .approveMembership()
-        .accounts({
+        .accountsStrict({
             community: communityPda,
             membership: membershipPda,
             admin: wallet.publicKey,
@@ -137,13 +139,15 @@ export const communityService = {
 
         const program = getAnchorProgram(wallet);
         const [communityPda] = getCommunityPDA(name);
-        // const [membershipPda] = getMembershipPDA(communityPda, wallet.publicKey);
+        const [membershipPda] = getMembershipPDA(communityPda, wallet.publicKey);
 
         await program.methods
         .joinCommunity()
-        .accounts({
+        .accountsStrict({
+            membership: membershipPda,
             community: communityPda,
             member: wallet.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
     },
@@ -165,17 +169,19 @@ export const communityService = {
         const [membershipPda] = getMembershipPDA(communityPda, wallet.publicKey);
 
         // Get current total polls to determine poll PDA
-        // const communityAccount = await program.account.community.fetch(communityPda);
-        // const [pollPda] = getPollPDA(communityPda, communityAccount.totalPolls);
+        const communityAccount = await program.account.community.fetch(communityPda);
+        const [pollPda] = getPollPDA(communityPda, communityAccount.totalPolls);
 
         const endTimeUnix = new anchor.BN(Math.floor(endTime.getTime() / 1000));
 
         await program.methods
         .createPoll(question, options, endTimeUnix)
-        .accounts({
+        .accountsStrict({
+            poll: pollPda,
             community: communityPda,
             membership: membershipPda,
             creator: wallet.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
     },
@@ -242,14 +248,16 @@ export const communityService = {
         const [communityPda] = getCommunityPDA(communityName);
         const [membershipPda] = getMembershipPDA(communityPda, wallet.publicKey);
         const [pollPda] = getPollPDA(communityPda, new anchor.BN(pollIndex));
-        // const [votePda] = getVotePDA(pollPda, wallet.publicKey);
+        const [votePda] = getVotePDA(pollPda, wallet.publicKey);
 
         await program.methods
         .castVote(optionIndex)
-        .accounts({
+        .accountsStrict({
+            vote: votePda,
             poll: pollPda,
             membership: membershipPda,
             voter: wallet.publicKey,
+            systemProgram: anchor.web3.SystemProgram.programId,
         })
         .rpc();
     },
@@ -270,7 +278,7 @@ export const communityService = {
 
         await program.methods
         .closePoll()
-        .accounts({
+        .accountsStrict({
             poll: pollPda,
             community: communityPda,
             authority: wallet.publicKey,
